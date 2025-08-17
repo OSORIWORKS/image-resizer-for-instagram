@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인스타그램 규격 일괄 리사이즈 도구</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .upload-area {
+            border: 3px dashed #833ab4;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(131, 58, 180, 0.05);
+        }
+        
+        .upload-area:hover {
+            border-color: #fd1d1d;
+            background: rgba(253, 29, 29, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .upload-area.dragover {
+            border-color: #fcb045;
+            background: rgba(252, 176, 69, 0.15);
+            transform: scale(1.02);
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .upload-text {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .file-list {
+            display: none;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(131, 58, 180, 0.08);
+            border-radius: 15px;
+        }
+        
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .file-item {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+        
+        .file-item:hover {
+            transform: translateY(-3px);
+        }
+        
+        .file-preview {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .file-info {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .file-name {
+            font-weight: bold;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 5px;
+            word-break: break-word;
+        }
+        
+        .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .format-selector {
+            display: none;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(131, 58, 180, 0.08);
+            border-radius: 15px;
+        }
+        
+        .format-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .format-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            position: relative;
+        }
+        
+        .format-card:hover {
+            border-color: #833ab4;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(131, 58, 180, 0.2);
+        }
+        
+        .format-card.selected {
+            border-color: #fd1d1d;
+            background: linear-gradient(135deg, rgba(131, 58, 180, 0.1), rgba(253, 29, 29, 0.1));
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(253, 29, 29, 0.3);
+        }
+        
+        .format-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .format-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .format-size {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .format-ratio {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 2px solid #ddd;
+            margin-top: 10px;
+            border-radius: 5px;
+            position: relative;
+        }
+        
+        .format-ratio.square {
+            aspect-ratio: 1/1;
+        }
+        
+        .format-ratio.portrait {
+            height: 50px;
+            width: 40px;
+        }
+        
+        .format-ratio.landscape {
+            height: 30px;
+            width: 50px;
+        }
+        
+        .processing-options {
+            display: none;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(252, 176, 69, 0.1);
+            border-radius: 15px;
+        }
+        
+        .option-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        select, input[type="color"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        select:focus, input[type="color"]:focus {
+            outline: none;
+            border-color: #833ab4;
+            box-shadow: 0 0 0 3px rgba(131, 58, 180, 0.1);
+        }
+        
+        button {
+            background: linear-gradient(45deg, #833ab4, #fd1d1d);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+            box-shadow: 0 4px 15px rgba(131, 58, 180, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(131, 58, 180, 0.4);
+        }
+        
+        .process-btn {
+            background: linear-gradient(45px, #fcb045, #fd1d1d);
+            font-size: 18px;
+            padding: 18px 40px;
+            margin: 20px auto;
+            display: block;
+        }
+        
+        .preview-area {
+            display: none;
+            margin-top: 30px;
+        }
+        
+        .preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .preview-box {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .preview-box:hover {
+            transform: scale(1.02);
+        }
+        
+        .preview-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1rem;
+        }
+        
+        .preview-image {
+            width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+        }
+        
+        .image-info {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        .download-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            font-size: 14px;
+            padding: 8px 16px;
+            margin: 5px;
+        }
+        
+        .download-btn:hover {
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+        
+        .batch-download {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(23, 162, 184, 0.1);
+            border-radius: 15px;
+            display: none;
+        }
+        
+        .batch-download-btn {
+            background: linear-gradient(45deg, #17a2b8, #138496);
+            font-size: 18px;
+            padding: 15px 40px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #28a745, #20c997);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @media (max-width: 768px) {
+            .format-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .file-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .preview-container {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📸 인스타그램 일괄 리사이즈</h1>
+        <div class="subtitle">여러 이미지를 인스타그램 각 용도에 맞는 완벽한 크기로 한 번에 변환하세요</div>
+        
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-text">
+                🖼️ 이미지 파일들을 드래그&드롭하거나 클릭하여 선택하세요<br>
+                <small style="color: #999;">여러 파일을 한 번에 선택할 수 있습니다</small>
+            </div>
+            <div style="font-size: 14px; color: #999; margin-top: 10px;">
+                지원 형식: JPG, PNG, GIF, WebP
+            </div>
+            <input type="file" id="imageInput" accept="image/*" multiple>
+        </div>
+        
+        <div class="file-list" id="fileList">
+            <h3 style="margin-top: 0; color: #333;">📁 선택된 이미지 파일 (<span id="fileCount">0</span>개)</h3>
+            <div class="file-grid" id="fileGrid"></div>
+        </div>
+        
+        <div class="format-selector" id="formatSelector">
+            <h3 style="text-align: center; color: #333; margin-bottom: 20px;">📱 인스타그램 용도 선택</h3>
+            <div class="format-grid">
+                <div class="format-card" data-format="square">
+                    <div class="format-icon">📷</div>
+                    <div class="format-title">피드 포스트</div>
+                    <div class="format-size">1080 × 1080px</div>
+                    <div class="format-ratio square"></div>
+                </div>
+                
+                <div class="format-card" data-format="portrait">
+                    <div class="format-icon">📱</div>
+                    <div class="format-title">세로 포스트</div>
+                    <div class="format-size">1080 × 1350px</div>
+                    <div class="format-ratio portrait"></div>
+                </div>
+                
+                <div class="format-card" data-format="landscape">
+                    <div class="format-icon">🖼️</div>
+                    <div class="format-title">가로 포스트</div>
+                    <div class="format-size">1080 × 566px</div>
+                    <div class="format-ratio landscape"></div>
+                </div>
+                
+                <div class="format-card" data-format="story">
+                    <div class="format-icon">📲</div>
+                    <div class="format-title">스토리</div>
+                    <div class="format-size">1080 × 1920px</div>
+                    <div class="format-ratio" style="width: 25px; height: 45px;"></div>
+                </div>
+                
+                <div class="format-card" data-format="reel">
+                    <div class="format-icon">🎬</div>
+                    <div class="format-title">릴스</div>
+                    <div class="format-size">1080 × 1920px</div>
+                    <div class="format-ratio" style="width: 25px; height: 45px;"></div>
+                </div>
+                
+                <div class="format-card" data-format="igtv">
+                    <div class="format-icon">📺</div>
+                    <div class="format-title">IGTV 커버</div>
+                    <div class="format-size">420 × 654px</div>
+                    <div class="format-ratio" style="width: 30px; height: 47px;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="processing-options" id="processingOptions">
+            <h4 style="margin-top: 0; color: #333;">⚙️ 일괄 처리 옵션</h4>
+            
+            <div class="option-group">
+                <label>크기 조정 방법:</label>
+                <select id="resizeMethod">
+                    <option value="fit">이미지에 맞춤 (여백 추가)</option>
+                    <option value="fill">화면 채움 (이미지 잘림)</option>
+                    <option value="stretch">늘리기 (비율 무시)</option>
+                </select>
+            </div>
+            
+            <div class="option-group" id="backgroundOption">
+                <label>배경 색상 (여백 추가 시):</label>
+                <input type="color" id="backgroundColor" value="#ffffff">
+            </div>
+        </div>
+        
+        <button class="process-btn" id="processBtn" style="display: none;" onclick="batchProcessImages()">
+            ✨ 모든 이미지 일괄 변환하기
+        </button>
+        
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div class="preview-area" id="previewArea">
+            <h3 style="text-align: center; color: #333; margin-bottom: 20px;">🎯 변환 결과</h3>
+            <div class="preview-container" id="previewContainer"></div>
+        </div>
+        
+        <div class="batch-download" id="batchDownload">
+            <h4 style="margin-top: 0; color: #17a2b8;">💾 일괄 다운로드</h4>
+            <p style="color: #666; margin-bottom: 20px;">모든 변환된 이미지를 ZIP 파일로 다운로드하거나 개별적으로 다운로드할 수 있습니다.</p>
+            <button class="batch-download-btn" onclick="downloadAllAsZip()">
+                📦 모든 이미지 ZIP 다운로드
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        let uploadedImages = [];
+        let processedImages = [];
+        let selectedFormat = null;
+        
+        const formatSpecs = {
+            square: { width: 1080, height: 1080, name: '피드 포스트' },
+            portrait: { width: 1080, height: 1350, name: '세로 포스트' },
+            landscape: { width: 1080, height: 566, name: '가로 포스트' },
+            story: { width: 1080, height: 1920, name: '스토리' },
+            reel: { width: 1080, height: 1920, name: '릴스' },
+            igtv: { width: 420, height: 654, name: 'IGTV 커버' }
+        };
+        
+        // 파일 업로드 이벤트
+        document.getElementById('uploadArea').addEventListener('click', () => {
+            document.getElementById('imageInput').click();
+        });
+        
+        // 드래그 앤 드롭
+        const uploadArea = document.getElementById('uploadArea');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+            if (files.length > 0) {
+                handleMultipleImageUpload(files);
+            }
+        });
+        
+        document.getElementById('imageInput').addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                handleMultipleImageUpload(files);
+            }
+        });
+        
+        // 포맷 선택 이벤트
+        document.querySelectorAll('.format-card').forEach(card => {
+            card.addEventListener('click', () => {
+                // 기존 선택 해제
+                document.querySelectorAll('.format-card').forEach(c => c.classList.remove('selected'));
+                // 새로운 선택
+                card.classList.add('selected');
+                selectedFormat = card.dataset.format;
+                
+                // 처리 옵션 표시
+                document.getElementById('processingOptions').style.display = 'block';
+                document.getElementById('processBtn').style.display = 'block';
+                
+                updateProcessingOptions();
+            });
+        });
+        
+        // 리사이즈 방법 변경 시 배경색 옵션 토글
+        document.getElementById('resizeMethod').addEventListener('change', updateProcessingOptions);
+        
+        function updateProcessingOptions() {
+            const method = document.getElementById('resizeMethod').value;
+            const backgroundOption = document.getElementById('backgroundOption');
+            backgroundOption.style.display = method === 'fit' ? 'block' : 'none';
+        }
+        
+        function handleMultipleImageUpload(files) {
+            uploadedImages = [];
+            const fileGrid = document.getElementById('fileGrid');
+            fileGrid.innerHTML = '';
+            
+            let loadedCount = 0;
+            
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        uploadedImages.push({
+                            file: file,
+                            image: img,
+                            dataUrl: e.target.result,
+                            name: file.name,
+                            originalWidth: img.width,
+                            originalHeight: img.height,
+                            index: index
+                        });
+                        
+                        // 파일 미리보기 생성
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'file-item';
+                        fileItem.innerHTML = `
+                            <button class="remove-btn" onclick="removeImage(${index})" title="삭제">×</button>
+                            <img src="${e.target.result}" class="file-preview" alt="미리보기">
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-info">${img.width} × ${img.height}px</div>
+                        `;
+                        fileGrid.appendChild(fileItem);
+                        
+                        loadedCount++;
+                        
+                        // 모든 이미지 로드 완료 시
+                        if (loadedCount === files.length) {
+                            document.getElementById('fileList').style.display = 'block';
+                            document.getElementById('formatSelector').style.display = 'block';
+                            document.getElementById('fileCount').textContent = files.length;
+                            document.getElementById('fileList').classList.add('fade-in');
+                            document.getElementById('formatSelector').classList.add('fade-in');
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function removeImage(index) {
+            uploadedImages = uploadedImages.filter(img => img.index !== index);
+            
+            if (uploadedImages.length === 0) {
+                document.getElementById('fileList').style.display = 'none';
+                document.getElementById('formatSelector').style.display = 'none';
+                document.getElementById('processingOptions').style.display = 'none';
+                document.getElementById('processBtn').style.display = 'none';
+                document.getElementById('previewArea').style.display = 'none';
+                document.getElementById('batchDownload').style.display = 'none';
+            } else {
+                // 파일 목록 다시 렌더링
+                const files = uploadedImages.map(item => item.file);
+                handleMultipleImageUpload(files);
+            }
+        }
+        
+        function batchProcessImages() {
+            if (uploadedImages.length === 0 || !selectedFormat) return;
+            
+            processedImages = [];
+            const spec = formatSpecs[selectedFormat];
+            const method = document.getElementById('resizeMethod').value;
+            const bgColor = document.getElementById('backgroundColor').value;
+            
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            const previewContainer = document.getElementById('previewContainer');
+            
+            progressBar.style.display = 'block';
+            previewContainer.innerHTML = '';
+            
+            let completed = 0;
+            const total = uploadedImages.length;
+            
+            uploadedImages.forEach((imageData, index) => {
+                setTimeout(() => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = spec.width;
+                    canvas.height = spec.height;
+                    
+                    // 배경 채우기
+                    ctx.fillStyle = bgColor;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // 고품질 설정
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    
+                    let drawX, drawY, drawWidth, drawHeight;
+                    
+                    switch (method) {
+                        case 'fit':
+                            const scale = Math.min(spec.width / imageData.originalWidth, spec.height / imageData.originalHeight);
+                            drawWidth = imageData.originalWidth * scale;
+                            drawHeight = imageData.originalHeight * scale;
+                            drawX = (spec.width - drawWidth) / 2;
+                            drawY = (spec.height - drawHeight) / 2;
+                            break;
+                            
+                        case 'fill':
+                            const fillScale = Math.max(spec.width / imageData.originalWidth, spec.height / imageData.originalHeight);
+                            drawWidth = imageData.originalWidth * fillScale;
+                            drawHeight = imageData.originalHeight * fillScale;
+                            drawX = (spec.width - drawWidth) / 2;
+                            drawY = (spec.height - drawHeight) / 2;
+                            break;
+                            
+                        case 'stretch':
+                            drawX = 0;
+                            drawY = 0;
+                            drawWidth = spec.width;
+                            drawHeight = spec.height;
+                            break;
+                    }
+                    
+                    ctx.drawImage(imageData.image, drawX, drawY, drawWidth, drawHeight);
+                    
+                    const processedDataUrl = canvas.toDataURL('image/png', 0.9);
+                    const originalName = imageData.name.replace(/\.[^/.]+$/, '');
+                    const fileName = `${originalName}_instagram_${selectedFormat}.png`;
+                    
+                    const processedData = {
+                        dataUrl: processedDataUrl,
+                        name: fileName,
+                        width: spec.width,
+                        height: spec.height,
+                        originalName: imageData.name,
+                        originalWidth: imageData.originalWidth,
+                        originalHeight: imageData.originalHeight
+                    };
+                    
+                    processedImages.push(processedData);
+                    
+                    // 미리보기 생성
+                    const previewBox = document.createElement('div');
+                    previewBox.className = 'preview-box';
+                    previewBox.innerHTML = `
+                        <div class="preview-title">${imageData.name}</div>
+                        <img src="${processedDataUrl}" class="preview-image" alt="Processed ${fileName}">
+                        <div class="image-info">
+                            원본: ${imageData.originalWidth} × ${imageData.originalHeight}px<br>
+                            변환: ${spec.width} × ${spec.height}px
+                        </div>
+                        <button class="download-btn" onclick="downloadSingleImage('${processedDataUrl}', '${fileName}')">
+                            💾 개별 다운로드
+                        </button>
+                    `;
+                    previewContainer.appendChild(previewBox);
+                    
+                    completed++;
+                    const progress = (completed / total) * 100;
+                    progressFill.style.width = progress + '%';
+                    
+                    if (completed === total) {
+                        progressBar.style.display = 'none';
+                        document.getElementById('previewArea').style.display = 'block';
+                        document.getElementById('batchDownload').style.display = 'block';
+                        document.getElementById('previewArea').classList.add('fade-in');
+                        showNotification(`🎉 ${total}개 이미지 변환이 완료되었습니다!`);
+                    }
+                }, index * 100);
+            });
+        }
+        
+        function downloadSingleImage(dataUrl, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification(`"${filename}" 다운로드가 시작되었습니다! 📸`);
+        }
+        
+        async function downloadAllAsZip() {
+            if (processedImages.length === 0) return;
+            
+            const zip = new JSZip();
+            
+            processedImages.forEach((imageData) => {
+                const base64Data = imageData.dataUrl.split(',')[1];
+                zip.file(imageData.name, base64Data, {base64: true});
+            });
+            
+            try {
+                const zipBlob = await zip.generateAsync({type: 'blob'});
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(zipBlob);
+                link.download = `instagram_resized_${selectedFormat}_${new Date().getTime()}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showNotification(`📦 ${processedImages.length}개 이미지가 포함된 ZIP 파일 다운로드가 시작되었습니다!`);
+            } catch (error) {
+                alert('ZIP 파일 생성 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+        
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(45deg, #833ab4, #fd1d1d);
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 1000;
+                font-weight: 500;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            
+            if (!document.getElementById('notificationStyle')) {
+                const style = document.createElement('style');
+                style.id = 'notificationStyle';
+                style.textContent = `
+                    @keyframes slideIn {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
